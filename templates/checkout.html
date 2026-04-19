@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - RV Technologies LTD{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <h1 class="display-5 fw-bold mb-4">
+        <i class="bi bi-credit-card me-2"></i>Checkout
+    </h1>
+    
+    <div class="row">
+        <!-- Checkout Form -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-lg">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold mb-4">
+                        <i class="bi bi-truck me-2"></i>Shipping Information
+                    </h3>
+                    
+                    <form method="POST" action="{{ url_for('checkout') }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label fw-semibold">
+                                <i class="bi bi-person me-2"></i>Full Name *
+                            </label>
+                            <input type="text" 
+                                   id="name" 
+                                   name="name" 
+                                   required
+                                   value="{{ user.name if user else '' }}"
+                                   class="form-control form-control-lg">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label fw-semibold">
+                                <i class="bi bi-telephone me-2"></i>Phone Number *
+                            </label>
+                            <input type="tel" 
+                                   id="phone" 
+                                   name="phone" 
+                                   required
+                                   value="{{ user.phone if user else '' }}"
+                                   class="form-control form-control-lg">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="location" class="form-label fw-semibold">
+                                <i class="bi bi-geo-alt-fill me-2"></i>Delivery Location *
+                            </label>
+                            <select id="location" 
+                                    name="location" 
+                                    required
+                                    class="form-select form-select-lg"
+                                    onchange="updateDeliveryFee()">
+                                <option value="">Select location</option>
+                                <option value="kigali">Kigali (1,500 RWF)</option>
+                                <option value="outside">Outside Kigali (2,000 RWF)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label fw-semibold">
+                                <i class="bi bi-geo-alt me-2"></i>Shipping Address *
+                            </label>
+                            <textarea id="address" 
+                                      name="address" 
+                                      required
+                                      rows="4"
+                                      class="form-control"
+                                      placeholder="Enter your complete shipping address">{{ user.address if user else '' }}</textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-wallet2 me-2"></i>Payment Method *
+                            </label>
+                            <div class="card mb-2">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="payment_method" 
+                                               id="mobile-money" 
+                                               value="Mobile Money" 
+                                               required
+                                               onchange="togglePaymentInstructions()">
+                                        <label class="form-check-label" for="mobile-money">
+                                            <strong>Mobile Money</strong>
+                                            <p class="text-muted small mb-0">Pay via MTN Mobile Money or Airtel Money</p>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="mobile-money-instructions" class="alert alert-info mb-3" style="display: none;">
+                                <strong><i class="bi bi-info-circle me-2"></i>Payment Instructions:</strong>
+                                <p class="mb-0 mt-2">
+                                    Dial: <code class="bg-white px-2 py-1 rounded">*182*1*1*0780635698*<span id="payment-amount">0</span>#</code>
+                                </p>
+                                <small class="text-muted">After payment, click "Place Order" to confirm your order.</small>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="payment_method" 
+                                               id="cod" 
+                                               value="Cash on Delivery" 
+                                               required
+                                               onchange="togglePaymentInstructions()">
+                                        <label class="form-check-label" for="cod">
+                                            <strong>Cash on Delivery</strong>
+                                            <p class="text-muted small mb-0">Pay when you receive your order</p>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Place Order
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card shadow-lg sticky-top" style="top: 100px;">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold mb-4">
+                        <i class="bi bi-receipt me-2"></i>Order Summary
+                    </h3>
+                    
+                    <div class="mb-4">
+                        {% for item in items %}
+                            <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
+                                <div class="flex-grow-1">
+                                    <p class="fw-semibold mb-1">{{ item.name }}</p>
+                                    <p class="text-muted small mb-0">Qty: {{ item.quantity }} × {{ "%.0f"|format(item.price) }} RWF</p>
+                                </div>
+                                <span class="fw-semibold">{{ "%.0f"|format(item.price * item.quantity) }} RWF</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal:</span>
+                            <span class="fw-semibold">{{ "%.0f"|format(subtotal) }} RWF</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Delivery Fee:</span>
+                            <span class="fw-semibold" id="delivery-fee-display">0 RWF</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fs-5 fw-bold">Total:</span>
+                            <span class="display-6 fw-bold text-primary" id="total-display">{{ "%.0f"|format(total) }} RWF</span>
+                        </div>
+                    </div>
+                    
+                    <a href="{{ url_for('cart') }}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Cart
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const subtotal = {{ subtotal|float }};
+let deliveryFee = 0;
+
+function updateDeliveryFee() {
+    const location = document.getElementById('location').value;
+    if (location === 'kigali') {
+        deliveryFee = 1500;
+    } else if (location === 'outside') {
+        deliveryFee = 2000;
+    } else {
+        deliveryFee = 0;
+    }
+    
+    document.getElementById('delivery-fee-display').textContent = deliveryFee.toLocaleString() + ' RWF';
+    const total = subtotal + deliveryFee;
+    document.getElementById('total-display').textContent = total.toLocaleString() + ' RWF';
+    document.getElementById('payment-amount').textContent = total.toLocaleString();
+}
+
+function togglePaymentInstructions() {
+    const mobileMoney = document.getElementById('mobile-money');
+    const instructions = document.getElementById('mobile-money-instructions');
+    
+    if (mobileMoney.checked) {
+        instructions.style.display = 'block';
+        updateDeliveryFee(); // Update payment amount
+    } else {
+        instructions.style.display = 'none';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateDeliveryFee();
+});
+</script>
+{% endblock %}

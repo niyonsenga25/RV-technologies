@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart - RV Technologies LTD{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold">Shopping Cart</h1>
+        {% if items %}
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+            </a>
+        {% endif %}
+    </div>
+
+    {% if items %}
+        <div class="row">
+            <div class="col-lg-8">
+                <div id="cart-items">
+                    {% for item in items %}
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-2">
+                                        {% if item.image %}
+                                            <img src="{{ url_for('static', filename='images/' + item.image) }}" 
+                                                 alt="{{ item.name }}" 
+                                                 class="img-fluid rounded"
+                                                 style="height: 120px; width: 100%; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 120px;">
+                                                <i class="bi bi-image text-muted fs-1"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5 class="fw-semibold mb-2">{{ item.name }}</h5>
+                                        <p class="text-muted mb-1 small">
+                                            <i class="bi bi-currency-exchange me-1"></i>{{ "%.0f"|format(item.price) }} RWF each
+                                        </p>
+                                        {% if item.stock < 10 %}
+                                            <small class="text-warning">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>Only {{ item.stock }} left
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-semibold">Quantity</label>
+                                        <div class="input-group">
+                                            <button class="btn btn-outline-secondary" 
+                                                    onclick="updateQuantity({{ item.product_id }}, {{ item.quantity - 1 }})"
+                                                    {% if item.quantity <= 1 %}disabled{% endif %}>
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <input type="number" 
+                                                   class="form-control text-center fw-bold" 
+                                                   value="{{ item.quantity }}" 
+                                                   readonly
+                                                   style="max-width: 60px;">
+                                            <button class="btn btn-outline-secondary" 
+                                                    onclick="updateQuantity({{ item.product_id }}, {{ item.quantity + 1 }})"
+                                                    {% if item.quantity >= item.stock %}disabled{% endif %}>
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                        {% if item.quantity >= item.stock %}
+                                            <small class="text-danger">
+                                                <i class="bi bi-exclamation-circle me-1"></i>Max stock reached
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        <label class="form-label small fw-semibold">Total</label>
+                                        <h5 class="fw-bold text-primary mb-0">{{ "%.0f"|format(item.price * item.quantity) }} RWF</h5>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <button class="btn btn-outline-danger btn-sm" 
+                                                onclick="removeFromCart({{ item.product_id }})"
+                                                title="Remove item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card shadow-lg sticky-top" style="top: 100px;">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4">
+                            <i class="bi bi-receipt me-2"></i>Order Summary
+                        </h5>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal:</span>
+                            <span class="fw-semibold">{{ "%.0f"|format(subtotal) }} RWF</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Delivery fee will be calculated at checkout</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="fs-5 fw-bold">Subtotal:</span>
+                            <span class="display-6 fw-bold text-primary">{{ "%.0f"|format(subtotal) }} RWF</span>
+                        </div>
+                        
+                        <a href="{{ url_for('checkout') }}" class="btn btn-primary w-100 btn-lg mb-3">
+                            <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
+                        </a>
+                        <a href="https://wa.me/{{ config.WHATSAPP_NUMBER }}?text=Hello!%20I%20have%20questions%20about%20my%20cart" 
+                           target="_blank"
+                           class="btn btn-success w-100">
+                            <i class="bi bi-whatsapp me-2"></i>Contact via WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-cart-x text-muted" style="font-size: 6rem;"></i>
+            </div>
+            <h3 class="fw-bold mb-3">Your cart is empty</h3>
+            <p class="text-muted mb-4">Add some products to your cart to get started!</p>
+            <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQuantity(productId, newQuantity) {
+    if (newQuantity < 1) {
+        removeFromCart(productId);
+        return;
+    }
+    
+    fetch('{{ url_for("update_cart") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `product_id=${productId}&quantity=${newQuantity}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Updated!',
+                text: data.message,
+                timer: 1500,
+                showConfirmButton: false
+            });
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message
+            });
+        }
+    });
+}
+
+function removeFromCart(productId) {
+    Swal.fire({
+        title: 'Remove item?',
+        text: 'Are you sure you want to remove this item from your cart?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, remove it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ url_for("remove_from_cart") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Removed!',
+                        text: data.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message
+                    });
+                }
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

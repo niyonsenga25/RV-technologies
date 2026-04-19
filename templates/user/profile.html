@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - RV Technologies LTD{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="d-flex align-items-center mb-4">
+                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                    <i class="bi bi-person text-primary fs-3"></i>
+                </div>
+                <div>
+                    <h1 class="display-6 fw-bold mb-0">My Profile</h1>
+                    <p class="text-muted mb-0">Manage your account information</p>
+                </div>
+            </div>
+            
+            <div class="card shadow-lg">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label fw-semibold">
+                                <i class="bi bi-person me-2"></i>Full Name
+                            </label>
+                            <input type="text" 
+                                   id="name" 
+                                   name="name" 
+                                   value="{{ user.name }}" 
+                                   required
+                                   class="form-control form-control-lg">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-semibold">
+                                <i class="bi bi-envelope me-2"></i>Email
+                            </label>
+                            <input type="email" 
+                                   id="email" 
+                                   value="{{ user.email }}" 
+                                   disabled
+                                   class="form-control form-control-lg bg-light">
+                            <small class="text-muted">Email cannot be changed</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label fw-semibold">
+                                <i class="bi bi-telephone me-2"></i>Phone Number
+                            </label>
+                            <input type="tel" 
+                                   id="phone" 
+                                   name="phone" 
+                                   value="{{ user.phone or '' }}"
+                                   class="form-control form-control-lg">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="address" class="form-label fw-semibold">
+                                <i class="bi bi-geo-alt me-2"></i>Address
+                            </label>
+                            <textarea id="address" 
+                                      name="address" 
+                                      rows="4"
+                                      class="form-control">{{ user.address or '' }}</textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 btn-lg">
+                            <i class="bi bi-save me-2"></i>Update Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
